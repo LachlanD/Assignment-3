@@ -1,8 +1,6 @@
 ---
-title: "COMP90014 Algorithms for Functional Genomics\   
-Semester 2 - 2016\  
-Assignment 3"
-author: "Lachlan Dryburgh"
+title: "COMP90014 Algorithms for Functional Genomics, Semester 2 - 2016, Assignment 3"
+author: "Lachlan Dryburgh 188607"
 date: 7/10/2016
 output: html_document
 ---
@@ -11,23 +9,59 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Libraries used for analysis
 
-This R markdown document shows the code used to generate the results of assignment 3 in algorithms for functional genomics, COMP90014, semester 2 - 2016.
+We need to load some R libraries for this differential gene expression analysis.  The main one is the edgeR package.  If they are not already installed edgeR can be installed with bioconductor the other packages can be installed with install.packages
 
-```{r libraries}
+```{r libraries, message = FALSE}
 library(edgeR)
 library(locfit)
 library(gridExtra)
 library(grid)
 ```
 
-## Including Plots
+## Load data and create DGE list
 
-You can also embed plots, for example:
+Load the counts data.  The data is in a tab delimited file.
+The counts data can then be used to create a DGEList.  The first 15 columns in the counts are females the next 15 are Males.
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+```{r load}
+counts = read.delim("assignment3data.tsv")
+d=DGEList(counts=counts[,1:30], group=factor(c(rep("F", 15),rep("M",15))))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Test the difference in counts
+
+Add a normalisation factor to the differential expression comparisons and calculate the dispersion.  Then we can perform a test between the counts.
+
+```{r Test}
+d=calcNormFactors(d)
+d=estimateDisp(d)
+
+et=exactTest(d)
+```
+
+## Top 10 differentially expressed genes
+
+Find the top 10 differentially expressed genes based on the adjsted p-value usng the topTags function.  We can add the gene names and chromosomes back into the top tags table from the count data and then use the grid library to produce a nice table.
+```{r Top 10 genes}
+tt = topTags(et, n=10, adjust.method="none", sort.by="P")
+tt$table["Gene"]=counts[rownames(tt),][31]
+tt$table["Chromosome"]=counts[rownames(tt),][32]
+grid.table(tt$table)
+```
+
+
+We can see all the genes come from the Y chromosome except the Xist gene which is expressed in females to inactvate one of the copies copies the X chromosome.
+
+
+## Heatmap of top 15 genes
+
+The top tags can be used to generate a table of the top 15 differentially expressed genes, again using unadjusted p-value.  We can visuallise
+
+```{r}
+de = topTags(et, n=15, adjust.method="none", sort.by="P")
+
+heatmap(d$counts[rownames(d) %in% rownames(de),])
+```
+
