@@ -3,7 +3,7 @@ title: COMP90014 Algorithms for Functional Genomics, Semester 2 - 2016, Assignme
   3
 author: "Lachlan Dryburgh 188607"
 date: "7/10/2016"
-output: pdf_document
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -11,7 +11,6 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ## Libraries used for analysis
-
 We need to load some R libraries for this differential gene expression analysis.  The main one is the edgeR package.  If they are not already installed edgeR can be installed with bioconductor the other packages can be installed with install.packages
 
 ```{r libraries, message = FALSE}
@@ -20,9 +19,8 @@ library(locfit)
 library(gridExtra)
 library(grid)
 ```
-
+# Task 1
 ## Load data and create DGE list
-
 Load the counts data.  The data is in a tab delimited file.
 The counts data can then be used to create a DGEList.  The first 15 columns in the counts are females the next 15 are Males.
 
@@ -32,7 +30,6 @@ d=DGEList(counts=counts[,1:30], group=factor(c(rep("F", 15),rep("M",15))))
 ```
 
 ## Test the difference in counts
-
 Add a normalisation factor to the differential expression comparisons and calculate the dispersion.  Then we can perform a test between the counts.
 
 ```{r Test}
@@ -43,10 +40,9 @@ et=exactTest(d)
 ```
 
 ## Top 10 differentially expressed genes
-
-Find the top 10 differentially expressed genes based on the adjsted p-value usng the topTags function.  We can add the gene names and chromosomes back into the top tags table from the count data and then use the grid library to produce a nice table.
+Find the top 10 differentially expressed genes based on the Benjamini-Hochberg adjsted p-value usng the topTags function.  We can add the gene names and chromosomes back into the top tags table from the count data and then use the grid library to produce a nice table.
 ```{r Top 10 genes}
-tt = topTags(et, n=10, adjust.method="none", sort.by="P")
+tt = topTags(et, n=10, adjust.method="BH", sort.by="P")
 tt$table["Gene"]=counts[rownames(tt),][31]
 tt$table["Chromosome"]=counts[rownames(tt),][32]
 grid.table(tt$table)
@@ -57,11 +53,10 @@ We can see all the genes come from the Y chromosome except the Xist gene which i
 
 
 ## Heatmap of top 15 genes
-
-The top tags can be used to generate a table of the top 15 differentially expressed genes, again using unadjusted p-value.  We can visuallise these genes along with the expression level in each individual using a heatmap.
+The top tags can be used to generate a table of the top 15 differentially expressed genes, again using the BH adjusted p-value.  We can visuallise these genes along with the expression level in each individual using a heatmap.
 
 ```{r}
-de = topTags(et, n=15, adjust.method="none", sort.by="P")
+de = topTags(et, n=15, adjust.method="BH", sort.by="P")
 
 heatmap(d$counts[rownames(d) %in% rownames(de),])
 ```
@@ -69,7 +64,6 @@ heatmap(d$counts[rownames(d) %in% rownames(de),])
 We can see on the heat map that 14 of the top 15 have expression only in the males with the remaining gene being expressed only in the females.
 
 ## Number of differentially expressed genes
-
 We can use the exactTest function to calculate the p-value for each gene, that is the probability of seeing that level of differential expression by chance where there was no underlying difference between the groups.  A p-value cutoff of 0.05 is used.
 
 ```{r Unadjusted p-values}
@@ -93,7 +87,6 @@ sum(bh!=0)/length(bh)
 With the adjusted p-values we can now see we have just 61 differentially expressed genes 0.0014 of the total number of genes.
 
 ## Y Chromosome genes
-
 We want investigate how many of the genes on the Y chromosome are differentially expressed.
 
 ```{r Y Chromosome}
@@ -104,7 +97,6 @@ sum(counts[32]=='Y')
 Using the 'BH' adjusted p-values we get differential expression of 24 of 115 genes on the Y chromsome.
 
 ## XIST Gene
-
 The XIST gene is expressed to silince one the copies of the X chromosome in females.  Looking at the expression of this gene.
 
 ```{r XIST Gene}
@@ -113,4 +105,80 @@ et$table[counts[31]=="XIST",]
 
 We can see a log Fold change of -9.7608 for this gene, showing that it has much lower expression in the males than the females as expected.
 
+# Task 2
+## Generate random groups
+We will be comparing our results to the case where individuals are randomlly assigned to each group rather than divided by sex.  Using the sample function with after setting a seed will allow reproducable results.
 
+```{r Sample}
+set.seed(1)
+random.group = sample(c("F","M"), size = 30, replace = T)
+random.group
+```
+
+## Differential Gene Expression Analysis
+We perform the same analysis as task 1 on our randomlly assigned grouping.
+
+```{r DGE Analysis}
+random.dge=DGEList(counts=counts[,1:30], group=factor(random.group))
+random.dge=calcNormFactors(random.dge)
+random.dge=estimateDisp(random.dge)
+r.et=exactTest(random.dge)
+```
+
+## Random Top 10 
+The top 10 differentially expressed genes calculated the same way as in task 1
+
+```{r Top 10}
+r.tt = topTags(r.et, n=10, adjust.method="BH", sort.by="P")
+r.tt$table["Gene"]=counts[rownames(r.tt),][31]
+r.tt$table["Chromosome"]=counts[rownames(r.tt),][32]
+grid.table(r.tt$table)
+```
+
+## Random Heatmap
+This is the heatmap of the random group assignment data.
+
+```{r Random heatmap}
+r.de = topTags(r.et, n=15, adjust.method="BH", sort.by="P")
+
+heatmap(random.dge$counts[rownames(random.dge) %in% rownames(r.de),])
+```
+
+We can see here that when randomally assigned the gtop differentially expressed genes are far less cleanly seperated by the group.
+
+## Number of differentially expressed genes
+Counting the number of genes with an unadjusted p-value of less than 0.05 using the same method as task 1.
+
+```{r random unadjusted}
+r.ua =decideTestsDGE(r.et, adjust.method = "none",p.value = 0.05)
+summary(r.ua)
+sum(r.ua!=0)
+sum(r.ua!=0)/length(r.ua)
+```
+The number of genes with an unadjusted p-value is 1351 which is 0.0307 of the total number of genes.
+
+```{r random adjusted}
+r.bh = decideTestsDGE(r.et, adjust.method = "BH", p.value = 0.05)
+summary(r.bh)
+sum(r.bh!=0)
+sum(r.bh!=0)/length(r.bh)
+```
+
+However when we use the Benjamini-Hochberg method to adjust the p-value we only have 2 genes with a value under 0.05 which is less than 0.0001 of the total number of genes.
+
+## Y Chromosome
+```{r random Y}
+sum(r.bh[counts[32]=='Y'])
+sum(counts[32]=='Y')
+```
+ When randomly assigned groups are assigned there are no differentially expressed genes from the Y chromosome.
+ 
+## XIST Gene
+```{r Random XIST}
+r.et$table[counts[31]=="XIST",]
+```
+The XIST gene has a log fold change of 0.4 which is a small change.
+
+#Task 3
+
+When comparing men to women it was found that 9 of the top 10 differentially expressed genes were on the Y chromosome.  Furthermore of the genes with and adjusted p-value less tan 0.05 24 out 61 where from the Y chromosome and this was from only 115 genes in total on the Y chromosome of 44061 gene in total.  This was an expected result since females do not a Y chromosome they must have zero expression of those genes and therefore any gene on the Y chromosome with significant expression will be found to be differentially expressed.  This could be seen on the heatmap representation of the top 15 genes where 14 were from the Y chromosome and we could see an very clean seperation between the groups.  There was only the single gene from the X chromosome was in the top ten differentially expressed genes this is because despite felmales having two copies of the chromosome compared to males one off the copies is "silenced" and does not express most of it's genes.  However the XIST gene is expressed on the 
