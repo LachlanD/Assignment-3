@@ -1,8 +1,9 @@
 ---
-title: "COMP90014 Algorithms for Functional Genomics, Semester 2 - 2016, Assignment 3"
+title: COMP90014 Algorithms for Functional Genomics, Semester 2 - 2016, Assignment
+  3
 author: "Lachlan Dryburgh 188607"
-date: 7/10/2016
-output: html_document
+date: "7/10/2016"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -57,11 +58,59 @@ We can see all the genes come from the Y chromosome except the Xist gene which i
 
 ## Heatmap of top 15 genes
 
-The top tags can be used to generate a table of the top 15 differentially expressed genes, again using unadjusted p-value.  We can visuallise
+The top tags can be used to generate a table of the top 15 differentially expressed genes, again using unadjusted p-value.  We can visuallise these genes along with the expression level in each individual using a heatmap.
 
 ```{r}
 de = topTags(et, n=15, adjust.method="none", sort.by="P")
 
 heatmap(d$counts[rownames(d) %in% rownames(de),])
 ```
+
+We can see on the heat map that 14 of the top 15 have expression only in the males with the remaining gene being expressed only in the females.
+
+## Number of differentially expressed genes
+
+We can use the exactTest function to calculate the p-value for each gene, that is the probability of seeing that level of differential expression by chance where there was no underlying difference between the groups.  A p-value cutoff of 0.05 is used.
+
+```{r Unadjusted p-values}
+ua =decideTestsDGE(et, adjust.method = "none",p.value = 0.05)
+
+summary(ua)
+sum(ua!=0)
+sum(ua!=0)/length(ua)
+```
+
+We can see the number the number of differentially expressed genes is 864 which 0.0196 of the total number of genes.  However since we are calculating the p-value independently for each of 44061 genes using the unadjusted 0.05 p-value will produce many false postive results.  We can take into acount that we are performing many test and calculate an adjusted p-value using the Benjamini-Hochberg (BH) method.
+
+```{r Adjusted p-value}
+bh = decideTestsDGE(et, adjust.method = "BH", p.value = 0.05)
+
+summary(bh)
+sum(bh!=0)
+sum(bh!=0)/length(bh)
+```
+
+With the adjusted p-values we can now see we have just 61 differentially expressed genes 0.0014 of the total number of genes.
+
+## Y Chromosome genes
+
+We want investigate how many of the genes on the Y chromosome are differentially expressed.
+
+```{r Y Chromosome}
+sum(bh[counts[32]=='Y'])
+sum(counts[32]=='Y')
+```
+
+Using the 'BH' adjusted p-values we get differential expression of 24 of 115 genes on the Y chromsome.
+
+## XIST Gene
+
+The XIST gene is expressed to silince one the copies of the X chromosome in females.  Looking at the expression of this gene.
+
+```{r XIST Gene}
+et$table[counts[31]=="XIST",]
+```
+
+We can see a log Fold change of -9.7608 for this gene, showing that it has much lower expression in the males than the females as expected.
+
 

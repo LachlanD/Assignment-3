@@ -37,7 +37,9 @@ sum(counts[32]=='Y')
 
 et$table[counts[31]=="XIST",]
 
+set.seed(1)
 random.group = sample(c("F","M"), size = 30, replace = T)
+random.group
 
 random.dge=DGEList(counts=counts[,1:30], group=factor(random.group))
 
