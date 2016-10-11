@@ -43,8 +43,9 @@ et=exactTest(d)
 Find the top 10 differentially expressed genes based on the Benjamini-Hochberg adjsted p-value usng the topTags function.  We can add the gene names and chromosomes back into the top tags table from the count data and then use the grid library to produce a nice table.
 ```{r Top 10 genes}
 tt = topTags(et, n=10, adjust.method="BH", sort.by="P")
+tt$table=round(tt$table,4)
 tt$table["Gene"]=counts[rownames(tt),][31]
-tt$table["Chromosome"]=counts[rownames(tt),][32]
+tt$table["Chr"]=counts[rownames(tt),][32]
 grid.table(tt$table)
 ```
 
@@ -111,7 +112,7 @@ We will be comparing our results to the case where individuals are randomlly ass
 
 ```{r Sample}
 set.seed(1)
-random.group = sample(c("F","M"), size = 30, replace = T)
+random.group = sample(c(rep("F",15),rep("M",15)), size = 30, replace = F)
 random.group
 ```
 
@@ -130,8 +131,9 @@ The top 10 differentially expressed genes calculated the same way as in task 1
 
 ```{r Top 10}
 r.tt = topTags(r.et, n=10, adjust.method="BH", sort.by="P")
+r.tt$table=round(r.tt$table,4)
 r.tt$table["Gene"]=counts[rownames(r.tt),][31]
-r.tt$table["Chromosome"]=counts[rownames(r.tt),][32]
+r.tt$table["Chr"]=counts[rownames(r.tt),][32]
 grid.table(r.tt$table)
 ```
 
@@ -155,7 +157,7 @@ summary(r.ua)
 sum(r.ua!=0)
 sum(r.ua!=0)/length(r.ua)
 ```
-The number of genes with an unadjusted p-value is 1351 which is 0.0307 of the total number of genes.
+The number of genes with an unadjusted p-value is 1040 which is 0.0236 of the total number of genes.
 
 ```{r random adjusted}
 r.bh = decideTestsDGE(r.et, adjust.method = "BH", p.value = 0.05)
@@ -164,7 +166,7 @@ sum(r.bh!=0)
 sum(r.bh!=0)/length(r.bh)
 ```
 
-However when we use the Benjamini-Hochberg method to adjust the p-value we only have 2 genes with a value under 0.05 which is less than 0.0001 of the total number of genes.
+However when we use the Benjamini-Hochberg method to adjust the p-value we only have 1 gene with a value under 0.05 which is less than 0.0001 of the total number of genes.
 
 ## Y Chromosome
 ```{r random Y}
@@ -177,8 +179,17 @@ sum(counts[32]=='Y')
 ```{r Random XIST}
 r.et$table[counts[31]=="XIST",]
 ```
-The XIST gene has a log fold change of 0.4 which is a small change.
+The XIST gene has a log fold change of -0.4047 which is a small change.
 
 #Task 3
 
-When comparing men to women it was found that 9 of the top 10 differentially expressed genes were on the Y chromosome.  Furthermore of the genes with and adjusted p-value less tan 0.05 24 out 61 where from the Y chromosome and this was from only 115 genes in total on the Y chromosome of 44061 gene in total.  This was an expected result since females do not a Y chromosome they must have zero expression of those genes and therefore any gene on the Y chromosome with significant expression will be found to be differentially expressed.  This could be seen on the heatmap representation of the top 15 genes where 14 were from the Y chromosome and we could see an very clean seperation between the groups.  There was only the single gene from the X chromosome was in the top ten differentially expressed genes this is because despite felmales having two copies of the chromosome compared to males one off the copies is "silenced" and does not express most of it's genes.  However the XIST gene is expressed on the 
+## Differentail Expression
+When comparing men to women it was found that 9 of the top 10 differentially expressed genes were on the Y chromosome.  Furthermore of the genes with and adjusted p-value less tan 0.05 24 out 61 where from the Y chromosome and this was from only 115 genes in total on the Y chromosome of 44061 gene in total.  This was an expected result since females do not a Y chromosome they must have zero expression of those genes and therefore any gene on the Y chromosome with significant expression will be found to be differentially expressed.  This could be seen on the heatmap representation of the top 15 genes where 14 were from the Y chromosome and we could see an very clean seperation between the groups.  
+
+Only a single gene from the X chromosome was in the top ten differentially expressed genes this is because despite females having two copies of the chromosome compared to males one off the copies is "silenced" and does not express most of it's genes.  However the XIST gene is expressed by only a silenced X chromosome therefore it will not be expressed in males since there single copy of the X chromosome is never silenced therefore it was also found in the list of differentially expressed genes. Male and females have equal numbers of the remaining other chromosomes, there is some differential expression of some gene through signaling and epigenetics however we would expect this to be far less common than on the Y chromsome and this was reflected by the fact that only 37 of the 43946 genes not on the Y chromosome were differentially expressed.
+
+
+## Randomised Control
+In order to validate our analysis we repeated the analysis with indviduals randomly assigned to groups.  If we found differential expression between randomly assigned groups it would indicate that our analysis was likely to be picking up statistical artifacts in addition to true affects.  Of course there is a trade off between sensitivity and specificity and a small number of false positives may be acceptable in order to find more true positives.  
+
+When we compared the female-male results it was found that there were actually more genes found with an unadjusted p-value of less than 0.05 in the randomised groups compared to the female-male groups, 1040 compared to 864.  This was somewhat unexpected as we would have expected the unadjusted  

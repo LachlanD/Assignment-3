@@ -13,10 +13,14 @@ d=estimateDisp(d)
 
 et=exactTest(d)
 
-tt = topTags(et, n=10, adjust.method="none", sort.by="P")
+tt = topTags(et, n=10, adjust.method="BH", sort.by="P")
+tt$table=round(tt$table,4)
 tt$table["Gene"]=counts[rownames(tt),][31]
 tt$table["Chromosome"]=counts[rownames(tt),][32]
+#tt$table[1:3]=round(tt$table[1:3],4)
 grid.table(tt$table)
+
+
 
 de = topTags(et, n=15, adjust.method="none", sort.by="P")
 
@@ -38,7 +42,7 @@ sum(counts[32]=='Y')
 et$table[counts[31]=="XIST",]
 
 set.seed(1)
-random.group = sample(c("F","M"), size = 30, replace = T)
+random.group = sample(c(rep("F",15),rep("M",15)), size = 30, replace = F)
 random.group
 
 random.dge=DGEList(counts=counts[,1:30], group=factor(random.group))
