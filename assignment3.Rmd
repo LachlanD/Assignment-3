@@ -3,7 +3,7 @@ title: COMP90014 Algorithms for Functional Genomics, Semester 2 - 2016, Assignme
   3
 author: "Lachlan Dryburgh 188607"
 date: "7/10/2016"
-output: html_document
+output: word_document
 ---
 
 ```{r setup, include=FALSE}
@@ -192,4 +192,8 @@ Only a single gene from the X chromosome was in the top ten differentially expre
 ## Randomised Control
 In order to validate our analysis we repeated the analysis with indviduals randomly assigned to groups.  If we found differential expression between randomly assigned groups it would indicate that our analysis was likely to be picking up statistical artifacts in addition to true affects.  Of course there is a trade off between sensitivity and specificity and a small number of false positives may be acceptable in order to find more true positives.  
 
-When we compared the female-male results it was found that there were actually more genes found with an unadjusted p-value of less than 0.05 in the randomised groups compared to the female-male groups, 1040 compared to 864.  This was somewhat unexpected as we would have expected the unadjusted  
+When we compared the female-male results it was found that there were actually more genes found with an unadjusted p-value of less than 0.05 in the randomised groups compared to the female-male groups, 1040 compared to 864. When using an unadjusted p-value of 0.05 we did expect to find a large number of genes since there are 44061 genes in total however it is a bit surprising that there was a greater number of genes found in the random grouping.  However once we we used the corrected p-value taking into acount the number of tests performed the number of genes found in the random grouping went down to 1 compared to 61 which is a good result giving us confidence that after adjustment we will be getting a low number of false positives.  We can see this as well in the top ten list of genes.  The randomised group does tend to a have higher unadjusted p-values although they are much lower than the siginficance level however the main difference is the false discovery rate which are much higher in the random grouping.
+
+The Heatmap is also interesting because we can see that there is no clear seperation between the groups as there was in the female-male groups and in fact we can see that a single individual with very high expression can be enough to create the differential expression by itself.  
+
+There were no Y chromsome genes found which was to be expected since the males and females were mixed together in the groupings and so we would expecct those genes to be approximately equal between the random groups.  Similarly the XIST gene only had a -0.4047 log fold change between the groups which is quite a small number.
